@@ -19,7 +19,6 @@ public:
     ~GraphAL();
     void add_edge(Vertex u, Vertex v);
     std::list<Vertex> get_adj(Vertex u);
-    void print_adj_list();
     uint get_edges();
     uint get_vertices();
     void remove_edge(Vertex u, Vertex v);
@@ -75,22 +74,6 @@ uint GraphAL::get_vertices()
     return num_vertices;
 }
 
-void GraphAL::print_adj_list()
-{
-    std::cout << "num_vertices: " << get_vertices() << std::endl;
-    std::cout << "num_edges: " << get_edges() << std::endl;
-    for (uint u = 0; u < num_vertices; ++u)
-    {
-        std::cout << u << ": ";
-        std::list<Vertex> list = get_adj(u);
-        for (auto &&v : list)
-        {
-            std::cout << v << ", ";
-        }
-        std::cout << std::endl;
-    }
-}
-
 void GraphAL::remove_edge(Vertex u, Vertex v)
 {
     if (u >= num_vertices || v >= num_vertices || u == v)
@@ -101,6 +84,21 @@ void GraphAL::remove_edge(Vertex u, Vertex v)
     adj[v].remove(u);
     num_edges -= 1;
 }
+
+void print_adj_list(GraphAL& graph) {
+    std::cout << "num_vertices: " << graph.get_vertices() << std::endl;
+    std::cout << "num_edges: " << graph.get_edges() << std::endl;
+
+    for (uint u = 0; u < graph.get_vertices(); ++u) {
+        std::cout << u << ": ";
+        std::list<Vertex> list = graph.get_adj(u);
+        for (const auto& v : list) {
+            std::cout << v << ", ";
+        }
+        std::cout << std::endl;
+    }
+}
+
 
 // ESPEC-8: a main()
 int main()
@@ -121,7 +119,7 @@ int main()
         graph.add_edge(u, v);
     }
 
-    graph.print_adj_list();
+    print_adj_list(graph);
 
     return 0;
 }
