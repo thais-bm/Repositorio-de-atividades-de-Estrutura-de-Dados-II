@@ -17,8 +17,6 @@ private:
   uint num_vertices;
   uint num_edges;
   std::vector<std::vector<Weight>> adj;
-
-// ESPEC-D3: Metodos publicos da classe
 public:
   WeightedWeightedGraphAM(uint num_vertices);
   ~WeightedWeightedGraphAM();
