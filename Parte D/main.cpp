@@ -73,7 +73,7 @@ std::list<VertexWeightPair> WeightedWeightedGraphAM::get_adj(Vertex u) const{
 }
 
 // ESPEC-D7: Implementacao do metodo get_adj_matrix
-std::vector<std::vector<Weight>>     WeightedWeightedGraphAM::get_adj_matrix() const {
+std::vector<std::vector<Weight>>WeightedWeightedGraphAM::get_adj_matrix() const {
     return adj;
 }
 
