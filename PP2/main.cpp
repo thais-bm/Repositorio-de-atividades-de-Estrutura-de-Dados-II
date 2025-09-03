@@ -5,8 +5,6 @@
 #include <limits>
 #include <iomanip>
 
-// class Queue
-
 template <typename T>
 class Queue
 {
@@ -30,7 +28,7 @@ void Queue<T>::dequeue()
 {
     if (empty())
     {
-        std::cout << "Queue tá vazior" << std::endl;
+        std::cout << "Queue ta vazior" << std::endl;
     }
     queue.erase(queue.begin());
 }
@@ -150,11 +148,11 @@ void print_adj_list(Tabuleiro &graph)
     }
 }
 
-// Busca em Largura
+
 class BFS
 {
 private:
-    // tem que usar as cores affr
+
     enum Color
     {
         white,
@@ -167,38 +165,21 @@ private:
     const std::vector<std::pair<int, int>> moviments = {
         {2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}};
 
-<<<<<<< HEAD
     void insertionSort(std::vector<int> &list);
     void auxiliarProcess(Tabuleiro &grafo, Vertex start);
 
-    // essas sao todos os movimentos possiveis do cavalo
-    // fazuelli: 2 para frente e 1 pro lado (em todas as direções, ave maria)
 
 public:
     std::pair<int, int> chessPair(const std::string &position);
-=======
-    // somar com movimentos para um possivel 'for'
-    std::pair<int, int> makeMoviment(std::pair<int, int> knightPos, std::pair<int, int> move);
->>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 
-public:
     BFS(std::vector<std::string> knights, std::string king)
     {
         this->king = king;
         this->knights = knights;
     }
 
-<<<<<<< HEAD
     void process(Tabuleiro &tabubu);
     void alcancaRei(Tabuleiro &grafo);
-=======
-    // ordena de notacao xadrez para valores inteiros
-    std::pair<int, int> chessPair(const std::string &position);
-    // algoritmo de ordenacao
-    void insertionSort(std::vector<int> &list);
-
-    
->>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 };
 
 std::pair<int, int> BFS::chessPair(const std::string &position)
@@ -208,33 +189,27 @@ std::pair<int, int> BFS::chessPair(const std::string &position)
     return {row, col};
 }
 
-<<<<<<< HEAD
-=======
-// é o insertionSort: algoritmo de ordenacao, olhe anexo 1
->>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 void BFS::insertionSort(std::vector<int> &list)
 {
     int key, idx_busca = 0;
     if (list.size() < 2)
     {
-        return; // erro, precisa ter + de 1 elemento
+        return; 
     }
 
     for (auto i = 1; i < list.size(); i++)
     {
-        key = list.at(i);                                  // pega o segundo valor
-        idx_busca = i - 1;                                 // volta 1 valor de indice
-        while (idx_busca >= 0 && list.at(idx_busca) > key) // o valor de trás for maior que a chave, a gente empurra eles pra direta
+        key = list.at(i);                                  
+        idx_busca = i - 1;                                 
+        while (idx_busca >= 0 && list.at(idx_busca) > key) 
         {
             list[idx_busca + 1] = list.at(idx_busca);
             idx_busca = idx_busca - 1; // reduz 1 o valor de j
         }
-        list[idx_busca + 1] = key; // se forem iguais ou chegar no inicio da fila, coloca a chave nesse lugar
-        // faz isso ate terminar o for
+        list[idx_busca + 1] = key; 
     }
 }
 
-<<<<<<< HEAD
 void BFS::auxiliarProcess(Tabuleiro &grafo, Vertex start)
 {
     std::vector<Color> color(grafo.get_vertices(), white);
@@ -272,29 +247,57 @@ void BFS::process(Tabuleiro &tabubu)
     auxiliarProcess(tabubu, start);
 }
 
-
-
-=======
-// ele vai fazer o movimento ao somar os std::pair e criar um par novo
-std::pair<int, int> BFS::makeMoviment(std::pair<int, int> knightPos, std::pair<int, int> move)
+void BFS::alcancaRei(Tabuleiro &grafo)
 {
-    return { knight.first + move.first, knight.second + move.second }
+    std::vector<int> dist(64, -1); 
+    std::vector<Color> color(64, white);
+    Queue<Vertex> fila;
+
+    for (const std::string &k : knights)
+    {
+        std::pair<int, int> aux = chessPair(k);
+        int linha = aux.first;
+        int coluna = aux.second;
+        Vertex origem = linha * 8 + coluna;
+
+        fila.enqueue(origem);
+        dist[origem] = 0;
+        color[origem] = grey;
+    }
+
+    std::pair<int, int> aux = chessPair(king);
+    int reiLinha = aux.first;
+    int reiColuna = aux.second;
+    Vertex destinoRei = reiLinha * 8 + reiColuna;
+
+    while (!fila.empty())
+    {
+        Vertex u = fila.front();
+        fila.dequeue();
+
+        for (Vertex v : grafo.get_adj(u))
+        {
+            if (color[v] == white)
+            {
+                color[v] = grey;
+                dist[v] = dist[u] + 1;
+                fila.enqueue(v);
+            }
+        }
+
+        color[u] = black;
+    }
+
 }
 
->>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 int main()
 {
     int tests;
     std::cin >> tests;
      std::vector<std::string> resultados;
 
-<<<<<<< HEAD
     while (tests--)
     {
-=======
-    // loop dos testes
-    while(tests--) {
->>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
         std::vector<std::string> knights(4);
         std::string king;
 
@@ -305,13 +308,10 @@ int main()
 
         std::cin >> king;
 
-<<<<<<< HEAD
-        // Cria o grafo do tabuleiro
         Tabuleiro g(64);
         const std::vector<std::pair<int, int>> movimentos = {
             {2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}};
 
-        // Adiciona todos os movimentos possíveis no grafo
         for (int linha = 0; linha < 8; linha++)
         {
             for (int coluna = 0; coluna < 8; coluna++)
@@ -386,29 +386,17 @@ int main()
             {
                 if (!linhaResultado.empty())
                     linhaResultado += " ";
-                linhaResultado += std::to_string(menor-1); // nao sei pq tem q ser um -1, mas enfim
+                linhaResultado += std::to_string(menor-1); 
             }
         }
 
         resultados.push_back(linhaResultado);
     }
 
-    // Imprime tudo no final
     for (const std::string &linha : resultados)
     {
         std::cout << linha << std::endl;
     }
 
     return 0;
-=======
-        // BFS bfs(tests, knights, king);
-    }
->>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 }
-
-// -x-x-x ANEXO 1 x-x-x-
-// Lógica do insertionSorte
-/* Começa pelo 2 elemento
--> Compara com os elementos á sua esquerda
--> desloca os maiores a direta -> insira o elemento atual na posição correta
-*/
