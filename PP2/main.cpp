@@ -69,6 +69,9 @@ private:
     const std::vector<std::pair<int, int>> moviments = {
         {2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}};
 
+    // somar com movimentos para um possivel 'for'
+    std::pair<int, int> makeMoviment(std::pair<int, int> knightPos, std::pair<int, int> move);
+
 public:
     BFS(std::vector<std::string> knights, std::string king)
     {
@@ -81,8 +84,7 @@ public:
     // algoritmo de ordenacao
     void insertionSort(std::vector<int> &list);
 
-    // somar com movimentos
-    std::pair<int, int> makeMoviment(std::pair<int, int> knightPos, std::pair<int, int> move);
+    
 };
 
 // Converte o par em notação 'letra-numero' para 'numero-numero'
@@ -93,11 +95,7 @@ std::pair<int, int> BFS::chessPair(const std::string &position)
     return {row, col};
 }
 
-// Lógica:
-/* Começa pelo 2 elemento
--> Compara com os elementos á sua esquerda
--> desloca os maiores a direta -> insira o elemento atual na posição correta
-*/
+// é o insertionSort: algoritmo de ordenacao, olhe anexo 1
 void BFS::insertionSort(std::vector<int> &list)
 {
     int key, idx_busca = 0;
@@ -132,7 +130,6 @@ int main()
     std::cin >> tests;
 
     // loop dos testes
-    /*
     while(tests--) {
         std::vector<std::string> knights(4);
         std::string king;
@@ -147,30 +144,11 @@ int main()
 
         // BFS bfs(tests, knights, king);
     }
-    */
-    std::vector<int> list = {1, 9, 8, 5, 3, 5};
-    int key, idx_busca = 0;
-    if (list.size() < 2)
-    {
-        return 1; // erro, precisa ter + de 1 elemento
-    }
-
-    for (auto i = 1; i < list.size(); i++)
-    {
-        key = list.at(i);                                  // pega o segundo valor
-        idx_busca = i - 1;                                 // volta 1 valor de indice
-        while (idx_busca >= 0 && list.at(idx_busca) > key) // o valor de trás for maior que a chave, a gente empurra eles pra direta
-        {
-            list[idx_busca + 1] = list.at(idx_busca);
-            idx_busca = idx_busca - 1; // reduz 1 o valor de j
-        }
-        list[idx_busca + 1] = key; // se forem iguais ou chegar no inicio da fila, coloca a chave nesse lugar
-        // faz isso ate terminar o for
-    }
-
-    for (int num : list)
-    {
-        std::cout << num << "\n";
-    }
-    return 0;
 }
+
+// -x-x-x ANEXO 1 x-x-x-
+// Lógica do insertionSorte
+/* Começa pelo 2 elemento
+-> Compara com os elementos á sua esquerda
+-> desloca os maiores a direta -> insira o elemento atual na posição correta
+*/
