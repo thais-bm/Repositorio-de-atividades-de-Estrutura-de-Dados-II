@@ -167,6 +167,7 @@ private:
     const std::vector<std::pair<int, int>> moviments = {
         {2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}};
 
+<<<<<<< HEAD
     void insertionSort(std::vector<int> &list);
     void auxiliarProcess(Tabuleiro &grafo, Vertex start);
 
@@ -175,15 +176,29 @@ private:
 
 public:
     std::pair<int, int> chessPair(const std::string &position);
+=======
+    // somar com movimentos para um possivel 'for'
+    std::pair<int, int> makeMoviment(std::pair<int, int> knightPos, std::pair<int, int> move);
+>>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 
+public:
     BFS(std::vector<std::string> knights, std::string king)
     {
         this->king = king;
         this->knights = knights;
     }
 
+<<<<<<< HEAD
     void process(Tabuleiro &tabubu);
     void alcancaRei(Tabuleiro &grafo);
+=======
+    // ordena de notacao xadrez para valores inteiros
+    std::pair<int, int> chessPair(const std::string &position);
+    // algoritmo de ordenacao
+    void insertionSort(std::vector<int> &list);
+
+    
+>>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 };
 
 std::pair<int, int> BFS::chessPair(const std::string &position)
@@ -193,6 +208,10 @@ std::pair<int, int> BFS::chessPair(const std::string &position)
     return {row, col};
 }
 
+<<<<<<< HEAD
+=======
+// é o insertionSort: algoritmo de ordenacao, olhe anexo 1
+>>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 void BFS::insertionSort(std::vector<int> &list)
 {
     int key, idx_busca = 0;
@@ -215,6 +234,7 @@ void BFS::insertionSort(std::vector<int> &list)
     }
 }
 
+<<<<<<< HEAD
 void BFS::auxiliarProcess(Tabuleiro &grafo, Vertex start)
 {
     std::vector<Color> color(grafo.get_vertices(), white);
@@ -254,14 +274,27 @@ void BFS::process(Tabuleiro &tabubu)
 
 
 
+=======
+// ele vai fazer o movimento ao somar os std::pair e criar um par novo
+std::pair<int, int> BFS::makeMoviment(std::pair<int, int> knightPos, std::pair<int, int> move)
+{
+    return { knight.first + move.first, knight.second + move.second }
+}
+
+>>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 int main()
 {
     int tests;
     std::cin >> tests;
      std::vector<std::string> resultados;
 
+<<<<<<< HEAD
     while (tests--)
     {
+=======
+    // loop dos testes
+    while(tests--) {
+>>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
         std::vector<std::string> knights(4);
         std::string king;
 
@@ -272,6 +305,7 @@ int main()
 
         std::cin >> king;
 
+<<<<<<< HEAD
         // Cria o grafo do tabuleiro
         Tabuleiro g(64);
         const std::vector<std::pair<int, int>> movimentos = {
@@ -366,4 +400,15 @@ int main()
     }
 
     return 0;
+=======
+        // BFS bfs(tests, knights, king);
+    }
+>>>>>>> 4520cbb03c6c9f0d6044caefafcdda9e76c5bd52
 }
+
+// -x-x-x ANEXO 1 x-x-x-
+// Lógica do insertionSorte
+/* Começa pelo 2 elemento
+-> Compara com os elementos á sua esquerda
+-> desloca os maiores a direta -> insira o elemento atual na posição correta
+*/
