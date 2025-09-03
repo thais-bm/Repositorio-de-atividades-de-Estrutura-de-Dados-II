@@ -70,15 +70,19 @@ private:
         {2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}};
 
 public:
-    std::pair<int, int> chessPair(const std::string &position);
-
     BFS(std::vector<std::string> knights, std::string king)
     {
         this->king = king;
         this->knights = knights;
     }
 
+    // ordena de notacao xadrez para valores inteiros
+    std::pair<int, int> chessPair(const std::string &position);
+    // algoritmo de ordenacao
     void insertionSort(std::vector<int> &list);
+
+    // somar com movimentos
+    std::pair<int, int> makeMoviment(std::pair<int, int> knightPos, std::pair<int, int> move);
 };
 
 // Converte o par em notação 'letra-numero' para 'numero-numero'
@@ -114,6 +118,12 @@ void BFS::insertionSort(std::vector<int> &list)
         list[idx_busca + 1] = key; // se forem iguais ou chegar no inicio da fila, coloca a chave nesse lugar
         // faz isso ate terminar o for
     }
+}
+
+// ele vai fazer o movimento ao somar os std::pair e criar um par novo
+std::pair<int, int> BFS::makeMoviment(std::pair<int, int> knightPos, std::pair<int, int> move)
+{
+    return { knight.first + move.first, knight.second + move.second }
 }
 
 int main()
