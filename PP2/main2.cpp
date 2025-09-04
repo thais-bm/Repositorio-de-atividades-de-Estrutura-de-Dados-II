@@ -59,11 +59,16 @@ class Tabuleiro
 private:
     uint num_vertices;
     uint num_edges;
-    // ele vai ter 64 de tamanho
+    // ele vai ter 64 de tamanho para representar uma tabuleiro 8 x 8
     std::list<Vertex> *adj;
 
+    // movimentos possiveis feitos pelo cavaleiro
+    std::vector<std::pair<int, int>> movimentos = {
+        {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {2, 1}, {2, -1}, {-2, 1}, {-2, -1}};
+
+    void criar_Grafo(); // possui grafo do tabuleiro INTEIRO
 public:
-    Tabuleiro(uint num_vert);
+    Tabuleiro();
     ~Tabuleiro();
     void add_edge(Vertex u, Vertex v);
     std::list<Vertex> get_adj(Vertex u);
@@ -72,11 +77,12 @@ public:
     void remove_edge(Vertex u, Vertex v);
 };
 
-Tabuleiro::Tabuleiro(uint num_vert)
+Tabuleiro::Tabuleiro()
 {
-    num_vertices = num_vert;
+    num_vertices = 64;
     num_edges = 0;
     adj = new std::list<Vertex>[num_vertices];
+    criar_Grafo(); // cria o grafo do tabuleiro
 }
 
 Tabuleiro::~Tabuleiro()
@@ -127,6 +133,38 @@ void Tabuleiro::remove_edge(Vertex u, Vertex v)
     num_edges -= 1;
 }
 
+void Tabuleiro::criar_Grafo()
+{
+    // Percorre todas as linhas e todas as colunas
+    for (int linha = 0; linha < 8; ++linha)
+    {
+        for (int coluna = 0; coluna < 8; ++coluna)
+        {
+
+            // Converte (linha, coluna) para o índice do vértice de origem ÚNICO ( a1 virou 0, b1 virou 1....)
+            int vertice_origem = linha * 8 + coluna;
+
+            // Aplica todos os movimentos possiveis pelo cavaleiro
+            for (const auto &mov : movimentos)
+            {
+                int nova_linha = linha + mov.first;
+                int nova_coluna = coluna + mov.second;
+
+                // 4. Verifica se a nova posição ta certa (dentro do tabuleiro)
+                if (nova_linha >= 0 && nova_linha < 8 && nova_coluna >= 0 && nova_coluna < 8)
+                {
+
+                    // Se for válida, converte para o indice unico de (possivel) destino
+                    int vertice_destino = nova_linha * 8 + nova_coluna;
+
+                    // Adiciona a aresta na lista de adjacência
+                    add_edge(vertice_origem, vertice_destino);
+                }
+            }
+        }
+    }
+}
+
 //  -x-x-x-x- Classe BFS: Busca em Largura  -x-x-x-x-
 class BFS
 {
@@ -139,19 +177,41 @@ private:
     };
 
     std::vector<std::string> knights;
-    std::string king;
+    std::pair<int, int> kingPosition; // vem convertido de notacao xadrez para um par de inteiros
     const std::vector<std::pair<unsigned int, unsigned int>> moviments = {
         {2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}};
 
     void insertionSort(std::vector<unsigned int> &list);
     void auxiliarProcess(Tabuleiro &grafo, Vertex start);
 
+    // essa funcao recebe o rei e, com base nos movimentos, determina as casas que representam ameaca pra ele
+    // se o cavalo chega nessas, o rei ta ameaçado de morte
+    std::vector<int> threatPositionForKing(std::pair<int, int> kingPosition)
+    {
+        std::vector<int> threatForKing;
+        for (auto mov : moviments)
+        {
+            int nova_linha = kingPosition.first + mov.first;
+            int nova_coluna = kingPosition.second + mov.second;
+
+            if (nova_linha >= 0 && nova_linha < 8 && nova_coluna >= 0 && nova_coluna < 8)
+            {
+                // Se for estiver entre 8 x 8, converte para o índice de vertice do tabuleiro
+                int ameaca = nova_linha * 8 + nova_coluna;
+                threatForKing.push_back(ameaca);
+            }
+            return threatForKing;
+        }
+    }
+
+    Tabuleiro grafoDoCavaleiro();
+
 public:
-    std::pair<unsigned int, unsigned int> chessPair(const std::string &position);
+    std::pair<unsigned int, unsigned int> ChessNotToPos(const std::string &position);
 
     BFS(std::vector<std::string> knights, std::string king)
     {
-        this->king = king;
+        this->kingPosition = ChessNotToPos(king);
         this->knights = knights;
     }
 
@@ -159,10 +219,10 @@ public:
     void alcancaRei(Tabuleiro &grafo);
 };
 
-std::pair<unsigned int, unsigned int> BFS::chessPair(const std::string &position)
+std::pair<unsigned int, unsigned int> BFS::ChessNotToPos(const std::string &position)
 {
-    unsigned int col = position[0] - 'a';
-    unsigned int row = position[1] - '1';
+    unsigned int col = position[0] - 'a'; // fica entre 0 e 7, logo < 8
+    unsigned int row = position[1] - '1'; // fica entre 0 e 7, logo < 8
     return {row, col};
 }
 
@@ -221,7 +281,7 @@ void BFS::auxiliarProcess(Tabuleiro &grafo, Vertex start)
 
 void BFS::process(Tabuleiro &tabubu)
 {
-    std::pair<unsigned int, unsigned int> kingPos = chessPair(king);
+    std::pair<unsigned int, unsigned int> kingPos = ChessNotToPos(king);
     unsigned int row = kingPos.first;
     unsigned int col = kingPos.second;
     Vertex start = row * 8 + col;
@@ -230,13 +290,22 @@ void BFS::process(Tabuleiro &tabubu)
 
 int main(int argc, char const *argv[])
 {
-    std::vector<std::string> cavaleiros = {"b1", "c3", "e5"};
-    std::string rei = "a1";
+    // Grafo de lista de adjacencia, mas chamado de Tabuleiro
+    Tabuleiro tabubu = Tabuleiro();
 
-    Tabuleiro tabuleiro(4);
-    BFS busca(cavaleiros, cavaleiros[0]);
+    std::cout << "num_vertices: " << tabubu.get_vertices() << std::endl;
+    std::cout << "num_edges: " << tabubu.get_edges() << std::endl;
 
-    busca.process(tabuleiro);
+    for (uint u = 0; u < tabubu.get_vertices(); ++u)
+    {
+        std::cout << u << ": ";
+        std::list<Vertex> list = tabubu.get_adj(u);
+        for (const auto &v : list)
+        {
+            std::cout << v << ", ";
+        }
+        std::cout << std::endl;
+    }
 
     return 0;
 }

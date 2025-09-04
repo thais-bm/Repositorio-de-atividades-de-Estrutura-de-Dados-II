@@ -40,13 +40,10 @@
 # debug information files
 *.dwo
 
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
-!*.code-workspace
+# nao vai ter ideia e nem vescode aq
+.idea/
+.vscode/
+
 
 # Built Visual Studio Code Extensions
 *.vsix
