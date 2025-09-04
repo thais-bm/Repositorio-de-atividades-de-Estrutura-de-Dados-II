@@ -32,7 +32,7 @@ void Queue<T>::dequeue()
 {
     if (empty())
     {
-        std::cout << "Queue tá vazior" << std::endl;
+        std::cout << "Queue ta vazior" << std::endl;
     }
     queue.erase(queue.begin());
 }
@@ -284,23 +284,166 @@ void BFS::process(Tabuleiro &tabubu, std::string rei)
     auxiliarProcess(tabubu, start);
 }
 
+//  -x-x-x-x- Classe Ataque dos Cavaleiros: Busca em Largura so que mudada -x-x-x-x-
+class AtaqueDosCavaleiros
+{
+private:
+    std::vector<std::string> cavaleiros;
+    std::string reiPosicao;
+    std::vector<int> ameacasRei(); // lista de casas que, se tiver ao alcance dos cavaleiros, o rei esta ameacado
+    int melhorCaminhoAoRei(const Tabuleiro &tabubu, int no_inicio, const std::vector<int> &listaAmeacas);
+
+    std::pair<int, int> ChessNotToPos(const std::string &position);
+
+public:
+    AtaqueDosCavaleiros(std::vector<std::string> knights, std::string king);
+    void solucionar(const Tabuleiro &tabubu);
+};
+
+AtaqueDosCavaleiros::AtaqueDosCavaleiros(std::vector<std::string> knights, std::string king)
+{
+    this->reiPosicao = king;
+    this->cavaleiros = knights;
+}
+
+std::pair<int, int> AtaqueDosCavaleiros::ChessNotToPos(const std::string &position)
+{
+    return {position[1] - '1', position[0] - 'a'};
+}
+
+std::vector<int> AtaqueDosCavaleiros::ameacasRei()
+{
+    // movimentos pro rei testar qual casa ameaca ele
+    const std::vector<std::pair<int, int>> movimentos = {
+        {2, 1}, {2, -1}, {-2, 1}, {-2, -1}, {1, 2}, {1, -2}, {-1, 2}, {-1, -2}};
+
+
+    // converter de string para par de inteiros
+    int coluna = reiPosicao[0] - 'a'; // fica entre 0 e 7, logo < 8
+    int linha = reiPosicao[1] - '1';  // fica entre 0 e 7, logo < 8
+
+    std::vector<int> listaAmeacas;
+    for (auto mov : movimentos)
+    {
+        int nova_linha = linha + mov.first;
+        int nova_coluna = coluna + mov.second;
+        if (nova_linha >= 0 && nova_linha < 8 && nova_coluna >= 0 && nova_coluna < 8)
+        {
+            listaAmeacas.push_back(nova_linha * 8 + nova_coluna); // converter para um indice do tabuleiro
+        }
+    }
+
+    return listaAmeacas;
+}
+
+int AtaqueDosCavaleiros::melhorCaminhoAoRei(const Tabuleiro &tabubu, int no_inicio, const std::vector<int> &listaAmeacas)
+{
+    int distanciaDoRei = 0; // contador de movimentos ate ameacar o rei
+
+    // Passo 1: Verificar se o inicio e uma ameaca ao rei logo de cara
+    for (auto pos : listaAmeacas)
+    {
+        if (no_inicio == pos)
+        {
+            return distanciaDoRei; // precisa fazer zero movimentos para ameacar o rei (menor caminho)
+        }
+    }
+
+    // Passo 2: A BFS propriamente dita
+    // todos os vertices estao marcados com -1,
+    /*
+
+    LEGENDA
+        -1 é BRANCO
+        quando ele é visto pela primeira
+        aumenta + 1 de acordo com as mudancas
+    */
+    std::vector<int> distancia(tabubu.get_vertices(), -1); // vector com 64 de tamanho cheio de -1 pra servido como NAO VISITADO
+    Queue<Vertex> fila;                                    // criei a fila
+
+    // Passo 3: coemcar a busca
+    distancia[no_inicio] = 0;
+    fila.enqueue(no_inicio);
+
+    while (!fila.empty())
+    {
+        Vertex u = fila.front();
+        fila.dequeue();
+
+        // Itera sobre a lista de adjacencias ja ordenada.
+        for (Vertex v : tabubu.get_adj(u))
+        {
+            if (distancia[v] == -1)
+            {
+                distancia[v] = distancia[u] + 1;
+                for (auto pos : listaAmeacas)
+                {
+                    if (v == pos)
+                    {
+                        return distancia[v]; // Se o vizinho e um dos alvos, encontramos o caminho mais curto.
+                    }
+                }
+                fila.enqueue(v);
+            }
+        }
+    }
+    return -1; // nao conseguiu alcancar, nem com reza braba
+}
+
+void AtaqueDosCavaleiros::solucionar(const Tabuleiro &tabubu)
+{
+    std::vector<int> posicao_alvo = ameacasRei();
+    std::vector<int> resultados;
+
+    int minimo_mov = 3000;
+
+    for (const auto &cavalo : this->cavaleiros)
+    {
+        std::pair<int, int> knight_pos = ChessNotToPos(cavalo);      // transformei num par
+        Vertex no_inicio = knight_pos.first * 8 + knight_pos.second; // transformei num vertice do tabuleiro
+
+        int moves = melhorCaminhoAoRei(tabubu, no_inicio, posicao_alvo); // rodo o BFS
+        resultados.push_back(moves); // guarda o resultado de cada cavaleiro
+        // procura quem deu o menor valor
+        if (moves != -1 && moves < minimo_mov)
+        {
+            minimo_mov = moves;
+        }
+    }
+
+    // Print do jeito que a questao quer
+    // Imprime o resultado no formato exigido pelo enunciado.
+    bool first = true;
+    for (int move_count : resultados)
+    {
+        if (move_count == minimo_mov)
+        {
+            if (!first)
+                std::cout << " ";
+            std::cout << move_count;
+            first = false;
+        }
+    }
+    std::cout << std::endl;
+}
+
 int main(int argc, char const *argv[])
 {
     Tabuleiro tabubu = Tabuleiro(); // Cria o tabuleiro e desenha o grafo com todas as possiveis posicoes do cavaleiro a partir de TODOS os pontos do tabuleiro
 
-    // PRINT tabuleiro
-    std::cout << "num_vertices: " << tabubu.get_vertices() << std::endl;
-    std::cout << "num_edges: " << tabubu.get_edges() << std::endl;
+    int num_tests;
+    std::cin >> num_tests;
 
-    for (uint u = 0; u < tabubu.get_vertices(); ++u)
-    {
-        std::cout << u << ": ";
-        std::vector<Vertex> list = tabubu.get_adj(u);
-        for (const auto &v : list)
-        {
-            std::cout << v << ", ";
+    while (num_tests--) {
+        std::vector<std::string> knights(4);
+        std::string king;
+        for (int i = 0; i < 4; ++i) {
+            std::cin >> knights[i];
         }
-        std::cout << std::endl;
+        std::cin >> king;
+
+        AtaqueDosCavaleiros solver(knights, king);
+        solver.solucionar(tabubu);
     }
 
     return 0;
