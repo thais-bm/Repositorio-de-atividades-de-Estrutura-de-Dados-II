@@ -4,38 +4,58 @@
 #include <cstdlib>
 #include <limits>
 #include <iomanip>
+#include <string>
 
-// -x-x-x-x- Classe Tabuleiro baseada num grafo lista de adjacencias em que geral se movimenta igual cavalo -x-x-x-x-
+// - Struct para representar os exercitos
+struct Exercito {
+    std::string cor; // cores + tormenta
+    const std::pair<int, int> posicao;
+    std::vector<std::string> aliados;
+};
+
+// -x-x-x-x- Classe Tabuleiro baseada num grafo lista de adjacencias com peso em que geral se movimenta igual cavalo -x-x-x-x-
+// Ainda falta implementar o peso nas arestas, faço depois de dormir
+// E ajustar pro tabuleiro criar certinho sem bugs
+// vo dar um soninho agora
 using Vertex = unsigned int;
 using uint = unsigned int;
+using Weight = float;
+using VertexWeightPair = std::pair<Vertex, Weight>;
 
 class Tabuleiro
 {
 private:
     uint num_vertices;
     uint num_edges;
-    std::vector<Vertex> *adj;
+    int tabuleiro_size = 8; // tamanho padrao 8x8
+    std::vector<VertexWeightPair> *adj;
     std::vector<std::pair<int, int>> movimentos = {
-        {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {2, 1}, {2, -1}, {-2, 1}, {-2, -1}};
+        {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {2, 1}, {2, -1}, {-2, 1}, {-2, -1}
+    };
 
-    void criar_Grafo();  
-    void insertionSort(std::vector<Vertex> &vec); 
-    void add_edge(Vertex u, Vertex v);
-    std::vector<Vertex> get_adj(Vertex u);
-    uint get_edges();
-    uint get_vertices();
+    void criar_grafo(); // ele usa o tabuleiro_size privado
+    void insertion_sort(std::vector<VertexWeightPair> &vec);
+
+    void add_edge(Vertex u, Vertex v, Weight w);
+    Weight calculate_edge_weight(Vertex u, Vertex v);
+
+    bool ja_existe_edge(Vertex u, Vertex v);
+    std::vector<VertexWeightPair> get_adj(Vertex u);
+    uint get_edges() const { return num_edges; }
+    uint get_vertices() const { return num_vertices; }
+    
 
 public:
-    Tabuleiro();
+    Tabuleiro(int size = 8);
     ~Tabuleiro();
 };
 
-Tabuleiro::Tabuleiro()
+Tabuleiro::Tabuleiro(int size)
 {
-    num_vertices = 64;
+    num_vertices = size * size; // Exemplo: 8 x 8 = 64 vertices
     num_edges = 0;
-    adj = new std::vector<Vertex>[num_vertices];
-    criar_Grafo();
+    adj = new std::vector<VertexWeightPair>[num_vertices];
+    criar_grafo();
 }
 
 Tabuleiro::~Tabuleiro()
@@ -44,19 +64,46 @@ Tabuleiro::~Tabuleiro()
     adj = nullptr;
 }
 
-void Tabuleiro::add_edge(Vertex u, Vertex v)
+// extra: ve se ja existe
+bool Tabuleiro::ja_existe_edge(Vertex u, Vertex v)
 {
+    for (const auto &pair : adj[u])
+    {
+        if (pair.first == v)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Tabuleiro::add_edge(Vertex u, Vertex v, Weight w)
+{
+    // teste de validade
+    // nao pode: menor que zero, maior que num_vertices e iguais
     if (u >= num_vertices || v >= num_vertices || u == v)
     {
         throw std::invalid_argument("Valores invalidos");
     }
 
-    adj[u].push_back(v);
-    adj[v].push_back(u);
-    num_edges += 1;
+    // verificar duplicidade (tem a verificacao na u<v na criacao do grafo, mas deixarei aqui tbm)
+    if (ja_existe_edge(u,v))
+    {
+        throw std::invalid_argument("Aresta duplicada");
+    }
+
+    // par v,w no final de adj[u]
+    VertexWeightPair par = std::make_pair(v, w);
+    adj[u].push_back(par);
+
+    // par u,w no final de adj[v]
+    par = std::make_pair(u, w);
+    adj[v].push_back(par);
+
+    num_edges += 1; 
 }
 
-std::vector<Vertex> Tabuleiro::get_adj(Vertex u)
+std::vector<VertexWeightPair> Tabuleiro::get_adj(Vertex u)
 {
     if (u >= num_vertices)
     {
@@ -65,23 +112,24 @@ std::vector<Vertex> Tabuleiro::get_adj(Vertex u)
     return adj[u];
 }
 
-uint Tabuleiro::get_edges()
-{
-    return num_edges;
+Weight Tabuleiro::calculate_edge_weight(Vertex u, Vertex v){
+    // numero unico para notacao xadrez 
+    int linha_u = u / tabuleiro_size; // linha = sempre numerico
+    int coluna_u = u % tabuleiro_size; // coluna = sempre letra
+
+    char coluna_u = 'a' + coluna_u;
+    char linhaChar = '1' + linha_u;
+
+    // vou fazer 
 }
 
-uint Tabuleiro::get_vertices()
+void Tabuleiro::criar_grafo()
 {
-    return num_vertices;
-}
-
-void Tabuleiro::criar_Grafo()
-{
-    for (int linha = 0; linha < 8; ++linha)
+    for (int linha = 0; linha < tabuleiro_size; ++linha)
     {
-        for (int coluna = 0; coluna < 8; ++coluna)
+        for (int coluna = 0; coluna < tabuleiro_size; ++coluna)
         {
-            int vertice_origem = linha * 8 + coluna; // Convertendo (linha, coluna) para vertice 0-63
+            int vertice_origem = linha * tabuleiro_size + coluna; // Convertendo (linha, coluna) para vertice 0-63
 
             // Adicionando arestas para todos os possiveis movimentos do cavalo
             for (const auto &mov : movimentos)
@@ -90,14 +138,14 @@ void Tabuleiro::criar_Grafo()
                 int nova_coluna = coluna + mov.second;
 
                 // Verificando se a nova posicao esta dentro dos limites do tabuleiro
-                if (nova_linha >= 0 && nova_linha < 8 && nova_coluna >= 0 && nova_coluna < 8)
+                if (nova_linha >= 0 && nova_linha < tabuleiro_size && nova_coluna >= 0 && nova_coluna < tabuleiro_size)
                 {
-                    int vertice_destino = nova_linha * 8 + nova_coluna;
+                    int vertice_destino = nova_linha * tabuleiro_size + nova_coluna;
 
                     // verficando se destino é maior que origem (grafo nao direcionado)
                     if (vertice_origem < vertice_destino)
                     {
-                        add_edge(vertice_origem, vertice_destino);
+                        add_edge(vertice_origem, vertice_destino, calculate_edge_weight(vertice_origem, vertice_destino)); // falta arrumar essa funcao de calcular o peso
                     }
                 }
             }
@@ -107,11 +155,11 @@ void Tabuleiro::criar_Grafo()
     // Depois de tudo, ordenar as listas de adjacencias
     for (uint u = 0; u < num_vertices; ++u)
     {
-        insertionSort(adj[u]);
+        insertion_sort(adj[u]);
     }
 }
 
-void Tabuleiro::insertionSort(std::vector<Vertex> &vec)
+void Tabuleiro::insertion_sort(std::vector<VertexWeightPair> &vec)
 {
     if (vec.size() < 2)
     {
@@ -120,7 +168,7 @@ void Tabuleiro::insertionSort(std::vector<Vertex> &vec)
 
     for (Vertex i = 1; i < vec.size(); i++)
     {
-        Vertex key = vec[i];
+        VertexWeightPair key = vec[i];
         int j = i - 1;
 
         while (j >= 0 && vec[j] > key)
@@ -132,7 +180,7 @@ void Tabuleiro::insertionSort(std::vector<Vertex> &vec)
     }
 }
 
-
+// 
 template <typename T>
 class Heapnode {
 private:
