@@ -104,14 +104,17 @@ void Tabuleiro::add_edge(Vertex u, Vertex v, Weight w)
 
 
 Weight Tabuleiro::calculate_edge_weight(Vertex u, Vertex v){
+    // transformando o tamanho em numero ASCII
+    char tamanho_tabuleiro = '0' + tabuleiro_size; // '0' + 8 = '8' (valor ASCII de '8')
+
     // numero unico para notacao xadrez 
     //formula inversa -> letra = (indice % 8) + 'A' e numero = 8 - (indice / 8)
 
-    char letra_u = (u % tabuleiro_size) + 'a'; // coluna = sempre letra
-    char numero_u = '8' - (u / tabuleiro_size); // linha = sempre numerico
+    char letra_u = (u % tabuleiro_size) + 'a'; // coluna = sempre letra -> resto da divisao pelo tamanho do tabuleiro + valor ascii de 'a'
+    char numero_u =  - (u / tabuleiro_size); // linha = sempre numerico -> 
 
     char letra_v = (v % tabuleiro_size) + 'a'; // coluna = sempre letra
-    char numero_v = '8' - (v / tabuleiro_size); // linha = sempre numerico
+    char numero_v = tamanho_tabuleiro - (v / tabuleiro_size); // linha = sempre numerico: valor ascii do tamanho do tabuleiro - ( vertice / tamanho do tabuleiro)
 
     // calculo do peso
     // peso = valor ASCII de letra u * numero u + valor ASCII de letra v * numero v mod 19
@@ -288,12 +291,6 @@ numero x indice
 
 formula do indice -> indice = (8 - numero) * 8 + (letra - 'A')
 formula inversa -> letra = (indice % 8) + 'A' e numero = 8 - (indice / 8)
-
-
-
-
-
-
 
 
 
