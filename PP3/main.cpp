@@ -5,6 +5,7 @@
 #include <limits>
 #include <iomanip>
 #include <string>
+#include <cmath>
 
 // - Struct para representar os exercitos
 struct Exercito
@@ -112,7 +113,7 @@ Weight Tabuleiro::calculate_edge_weight(Vertex u, Vertex v)
     // formula inversa -> letra = (indice % 8) + 'A' e numero = 8 - (indice / 8)
 
     char letra_u = (u % tabuleiro_size) + 'a'; // coluna = sempre letra -> resto da divisao pelo tamanho do tabuleiro + valor ascii de 'a'
-    char numero_u = -(u / tabuleiro_size);     // linha = sempre numerico ->
+    char numero_u = tamanho_tabuleiro - (u / tabuleiro_size);     // linha = sempre numerico ->
 
     char letra_v = (v % tabuleiro_size) + 'a';                // coluna = sempre letra
     char numero_v = tamanho_tabuleiro - (v / tabuleiro_size); // linha = sempre numerico: valor ascii do tamanho do tabuleiro - ( vertice / tamanho do tabuleiro)
