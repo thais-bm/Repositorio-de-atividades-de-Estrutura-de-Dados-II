@@ -326,6 +326,13 @@ void printAdjacencyList(Tabuleiro &graph)
     }
 }
 
+// - x - x - Struct de algoritmo de caminho minimo Dijkstra - x - x -
+struct Dijkstra{
+    Exercito* exercito;
+    // atributos do algoritmo de dijistra
+    // nao sei como escreve o nome dele
+};
+
 int main(int argc, char const *argv[])
 {
     Tabuleiro tabuleiro;
