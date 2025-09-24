@@ -7,14 +7,6 @@
 #include <string>
 #include <cmath>
 
-// - Struct para representar os exercitos
-struct Exercito
-{
-    std::string cor; // cores + tormenta
-    const std::pair<int, int> posicao;
-    std::vector<std::string> aliados;
-};
-
 // -x-x-x-x- Classe Tabuleiro baseada num grafo lista de adjacencias com peso em que geral se movimenta igual cavalo -x-x-x-x-
 // Ainda falta implementar o peso nas arestas, faço depois de dormir
 // E ajustar pro tabuleiro criar certinho sem bugs
@@ -24,49 +16,107 @@ using uint = unsigned int;
 using Weight = float;
 using VertexWeightPair = std::pair<Vertex, Weight>;
 
-class Tabuleiro
+
+
+// ----------------------------- STRUCTS E FUNCOES GERAIS PUBLICAS ------------------------
+// - Struct para representar os exercitos
+struct Exercito {
+    std::string cor; // cores + tormenta
+    const std::pair<int, int> posicao;
+    bool is_alianca;
+    //std::vector<alguma_coisa> caminho;
+};
+
+struct Casa {
+    std::vector<Exercito> exercitos;
+    bool tormenta;
+};
+
+std::pair<char, char> int_to_chess (Vertex u, int size) {
+    //retorna { {letra u, numero u}, {letra v, numero v} }
+    // transformando o tamanho em numero ASCII
+    char tamanho_tabuleiro = '0' + size; // '0' + 8 = '8' (valor ASCII de '8')
+
+    // numero unico para notacao xadrez
+    // formula inversa -> letra = (indice % 8) + 'A' e numero = 8 - (indice / 8)
+
+    char letra_u = (u % size) + 'a'; // coluna = sempre letra -> resto da divisao pelo tamanho do tabuleiro + valor ascii de 'a'
+    char numero_u = tamanho_tabuleiro - (u / size);     // linha = sempre numerico ->
+
+    return {letra_u, numero_u};
+}
+
+std::vector<uint> algoritmo_movimentos (Vertex u, int size) {
+    int u1 = u / size;
+    int u2 = u * size;
+    std::vector<std::pair<int, int>> movimentos = {{1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {2, 1}, {2, -1}, {-2, 1}, {-2, -1}};
+    std::vector<Vertex> posfinal;
+
+    for (std::pair<int, int> movimento : movimentos) {
+        posfinal.push_back((u1 + movimento.first)*size + (u2 + movimento.second));
+    }
+    return posfinal;
+} 
+
+Weight calculate_edge_weight(Vertex u, Vertex v, uint size)
 {
+    std::pair<char, char> helper = int_to_chess(u, size);
+    char letra_u = helper.first;
+    char numero_u = helper.second;
+    helper = int_to_chess(v, size);
+    char letra_v = helper.first;
+    char numero_v = helper.second;
+    
+    Weight peso = ((static_cast<int>(letra_u) * (numero_u - '0')) + (static_cast<int>(letra_v) * (numero_v - '0'))) % 19;
+
+    //std::cout << "Peso de " << letra_u << numero_u << " e " << letra_v << numero_v << ": " << peso << " Calculado com: " << static_cast<int>(letra_u) << " * " << (numero_u - '0') << " + " << static_cast<int>(letra_v) << " * " << (numero_v - '0') << " mod 19" << " = " << peso << std::endl;
+    return peso;
+}
+
+// ----------------------------------------- CLASSE GRAFO PONDERADO -------------------------------
+
+class GrafoPonderado {
 private:
     uint num_vertices;
     uint num_edges;
-    int tabuleiro_size = 8; // tamanho padrao 8x8
+    int size = 8; // tamanho padrao 8x8
     std::vector<VertexWeightPair> *adj;
-    std::vector<std::pair<int, int>> movimentos = {
-        {1, 2}, {1, -2}, {-1, 2}, {-1, -2}, {2, 1}, {2, -1}, {-2, 1}, {-2, -1}};
+    
 
-    void criar_grafo(); // ele usa o tabuleiro_size privado
+    void criar_grafo(); // ele usa o size privado
     void insertion_sort(std::vector<VertexWeightPair> &vec);
-
-    void add_edge(Vertex u, Vertex v, Weight w);
-    Weight calculate_edge_weight(Vertex u, Vertex v);
 
     bool ja_existe_edge(Vertex u, Vertex v);
 
 public:
-    Tabuleiro(int size = 8);
-    ~Tabuleiro();
 
+    GrafoPonderado(uint size);
+    ~GrafoPonderado();
+
+
+    void add_edge(Vertex u, Vertex v, Weight w);
     std::vector<VertexWeightPair> get_adj(Vertex u);
     uint get_edges() const { return num_edges; }
     uint get_vertices() const { return num_vertices; }
+    Weight get_peso(Vertex u, Vertex v) const { return adj[u][v].second; }
+    int get_tamanho() const { return size; }
 };
 
-Tabuleiro::Tabuleiro(int size)
+GrafoPonderado::GrafoPonderado(uint size) : size(size)
 {
     num_vertices = size * size; // Exemplo: 8 x 8 = 64 vertices
     num_edges = 0;
     adj = new std::vector<VertexWeightPair>[num_vertices];
-    criar_grafo();
 }
 
-Tabuleiro::~Tabuleiro()
+GrafoPonderado::~GrafoPonderado()
 {
     delete[] adj;
     adj = nullptr;
 }
 
 // extra: ve se ja existe
-bool Tabuleiro::ja_existe_edge(Vertex u, Vertex v)
+bool GrafoPonderado::ja_existe_edge(Vertex u, Vertex v)
 {
     for (const auto &pair : adj[u])
     {
@@ -78,7 +128,7 @@ bool Tabuleiro::ja_existe_edge(Vertex u, Vertex v)
     return false;
 }
 
-void Tabuleiro::add_edge(Vertex u, Vertex v, Weight w)
+void GrafoPonderado::add_edge(Vertex u, Vertex v, Weight w)
 {
     // teste de validade
     // nao pode: menor que zero, maior que num_vertices e iguais
@@ -104,30 +154,12 @@ void Tabuleiro::add_edge(Vertex u, Vertex v, Weight w)
     num_edges += 1;
 }
 
-Weight Tabuleiro::calculate_edge_weight(Vertex u, Vertex v)
-{
-    // transformando o tamanho em numero ASCII
-    char tamanho_tabuleiro = '0' + tabuleiro_size; // '0' + 8 = '8' (valor ASCII de '8')
 
-    // numero unico para notacao xadrez
-    // formula inversa -> letra = (indice % 8) + 'A' e numero = 8 - (indice / 8)
 
-    char letra_u = (u % tabuleiro_size) + 'a'; // coluna = sempre letra -> resto da divisao pelo tamanho do tabuleiro + valor ascii de 'a'
-    char numero_u = tamanho_tabuleiro - (u / tabuleiro_size);     // linha = sempre numerico ->
 
-    char letra_v = (v % tabuleiro_size) + 'a';                // coluna = sempre letra
-    char numero_v = tamanho_tabuleiro - (v / tabuleiro_size); // linha = sempre numerico: valor ascii do tamanho do tabuleiro - ( vertice / tamanho do tabuleiro)
 
-    // calculo do peso
-    // peso = valor ASCII de letra u * numero u + valor ASCII de letra v * numero v mod 19
-    // static_cast<int> para converter char para int (valor ASCII)
-    Weight peso = ((static_cast<int>(letra_u) * (numero_u - '0')) + (static_cast<int>(letra_v) * (numero_v - '0'))) % 19;
 
-    std::cout << "Peso de " << letra_u << numero_u << " e " << letra_v << numero_v << ": " << peso << " Calculado com: " << static_cast<int>(letra_u) << " * " << (numero_u - '0') << " + " << static_cast<int>(letra_v) << " * " << (numero_v - '0') << " mod 19" << " = " << peso << std::endl;
-    return peso;
-}
-
-std::vector<VertexWeightPair> Tabuleiro::get_adj(Vertex u)
+std::vector<VertexWeightPair> GrafoPonderado::get_adj(Vertex u)
 {
     if (u >= num_vertices)
     {
@@ -136,13 +168,15 @@ std::vector<VertexWeightPair> Tabuleiro::get_adj(Vertex u)
     return adj[u];
 }
 
-void Tabuleiro::criar_grafo()
+/*
+implementar na classe tabuleiro
+void GrafoPonderado::criar_grafo()
 {
-    for (int coluna = 0; coluna < tabuleiro_size; ++coluna)
+    for (int coluna = 0; coluna < size; ++coluna)
     {
-        for (int linha = 0; linha < tabuleiro_size; ++linha)
+        for (int linha = 0; linha < size; ++linha)
         {
-            int vertice_origem = linha * tabuleiro_size + coluna; // Convertendo (linha, coluna) para vertice 0-63
+            int vertice_origem = linha * size + coluna; // Convertendo (linha, coluna) para vertice 0-63
 
             // Adicionando arestas para todos os possiveis movimentos dos exercitos com base em cavalo
             for (const auto &mov : movimentos)
@@ -151,9 +185,9 @@ void Tabuleiro::criar_grafo()
                 int nova_linha = linha + mov.second;
 
                 // Verificando se a nova posicao esta dentro dos limites do tabuleiro
-                if (nova_linha >= 0 && nova_linha < tabuleiro_size && nova_coluna >= 0 && nova_coluna < tabuleiro_size)
+                if (nova_linha >= 0 && nova_linha < size && nova_coluna >= 0 && nova_coluna < size)
                 {
-                    int vertice_destino = nova_linha * tabuleiro_size + nova_coluna;
+                    int vertice_destino = nova_linha * size + nova_coluna;
 
                     // verficando se destino é maior que origem (grafo nao direcionado)
                     if (vertice_origem < vertice_destino)
@@ -171,8 +205,8 @@ void Tabuleiro::criar_grafo()
         insertion_sort(adj[u]);
     }
 }
-
-void Tabuleiro::insertion_sort(std::vector<VertexWeightPair> &vec)
+*/
+void GrafoPonderado::insertion_sort(std::vector<VertexWeightPair> &vec)
 {
     if (vec.size() < 2)
     {
@@ -194,6 +228,39 @@ void Tabuleiro::insertion_sort(std::vector<VertexWeightPair> &vec)
         vec[j + 1] = vec[i];
     }
 }
+
+
+//   ---------------------------------------------------- TABULEIRO -------------------------
+
+class Tabuleiro {
+private:
+    GrafoPonderado grafo;
+    std::vector<Casa> listacasas;
+    uint tamanho;
+    uint turno;
+public:
+
+    Tabuleiro(uint tam);
+    
+    uint get_tamanho() const {return tamanho;}
+    GrafoPonderado get_grafo() {return grafo;}
+};
+
+/*acabei de aprender sobre inicializacao por lista, tecnicamente mais eficiente porque assim o construtor nao precisa
+iniciar o objeto com atributos vazios so pra substituir eles logo depois, e ja cria direto o objeto com os valores dados
+alem de que o c++ nao reclama da falta de construtor padrao de GrafoPonderado se so criar objeto dessa forma*/
+Tabuleiro::Tabuleiro(uint tam) : tamanho(tam), grafo(GrafoPonderado(tam)), turno(0) {
+    for (uint i = 0; i < tamanho; i++) {
+        std::vector<uint> movimentos = algoritmo_movimentos(i, tamanho);
+        for (uint pos : movimentos) {
+            try {
+                grafo.add_edge(i, pos, calculate_edge_weight(i, pos, tamanho));
+            } catch (const std::invalid_argument e) {}
+        }
+    }
+}
+
+// --------------------------------------- HEAP ---------------------------------------------------
 
 // Nao me decidi sobre o tipo, entao deixarei generico
 // Pai = i/2
@@ -309,18 +376,20 @@ void MinHeap<T>::erase(const T &value)
 }
 
 // DEBUG DO TABULEIRO
-void printAdjacencyList(Tabuleiro &graph)
+void printAdjacencyList(GrafoPonderado graph)
 {
     std::cout << "num_vertices: " << graph.get_vertices() << std::endl;
     std::cout << "num_edges: " << graph.get_edges() << std::endl;
 
+    int tamanho = graph.get_tamanho();
+
     for (uint u = 0; u < graph.get_vertices(); ++u)
     {
-        std::cout << u << ": ";
+        std::cout << int_to_chess(u, tamanho).first << int_to_chess(u, tamanho).second << ": ";
         std::vector<VertexWeightPair> list = graph.get_adj(u);
         for (const auto &v : list)
         {
-            std::cout << "(" << v.first << ", " << v.second << "), ";
+            std::cout << "(" << int_to_chess(v.first, tamanho).first << int_to_chess(v.first, tamanho).second << ", " << v.second << "), ";
         }
         std::cout << std::endl;
     }
@@ -335,8 +404,10 @@ struct Dijkstra{
 
 int main(int argc, char const *argv[])
 {
-    Tabuleiro tabuleiro;
-    printAdjacencyList(tabuleiro);
+    Tabuleiro tabuleiro = Tabuleiro(4);
+    printAdjacencyList(tabuleiro.get_grafo());
+    std::cout << tabuleiro.get_tamanho();
+    std::cout << tabuleiro.get_grafo().get_tamanho();
     return 0;
 }
 
