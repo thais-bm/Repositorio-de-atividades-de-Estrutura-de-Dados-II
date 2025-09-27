@@ -310,6 +310,7 @@ struct DijkstraResult
 {
     std::vector<Weight> distancias;
     std::vector<int> predecessores;
+    std::vector<int> movimentos;
 };
 
 DijkstraResult dijkstra(const GrafoPonderado &grafo, Vertex origem)
@@ -318,10 +319,12 @@ DijkstraResult dijkstra(const GrafoPonderado &grafo, Vertex origem)
     DijkstraResult resultado;
     resultado.distancias.assign(num_vertices, std::numeric_limits<Weight>::infinity());
     resultado.predecessores.assign(num_vertices, -1);
+    resultado.movimentos.assign(num_vertices, std::numeric_limits<int>::max());
 
     resultado.distancias[origem] = 0;
+    resultado.movimentos[origem] = 0;
 
-    MinHeap<VertexWeightPair> fila_prioridade;
+    MinHeap<std::pair<Weight, Vertex>> fila_prioridade;
     fila_prioridade.insert({0.0f, origem});
 
     std::vector<bool> visitado(num_vertices, false);
@@ -332,19 +335,40 @@ DijkstraResult dijkstra(const GrafoPonderado &grafo, Vertex origem)
 
         if (visitado[u])
             continue;
+        
         visitado[u] = true;
-        grafo.get_adj(0);
-
+    
         for (const auto &vizinho : grafo.get_adj(u))
         {
             Vertex v = vizinho.first;
             Weight peso_aresta = vizinho.second;
 
-            if (!visitado[v] && resultado.distancias[u] + peso_aresta < resultado.distancias[v])
+            Weight nova_distancia = resultado.distancias[u] + peso_aresta; // salvando a nova distancia
+            int novos_movimentos = resultado.movimentos[u] + 1; // salvando os novos movimentos
+
+            // verficando se ja foi visitado
+            if (!visitado[v])
             {
-                resultado.distancias[v] = resultado.distancias[u] + peso_aresta;
-                resultado.predecessores[v] = u;
-                fila_prioridade.insert({resultado.distancias[v], v});
+                // caminho com peso menor
+                if (nova_distancia < resultado.distancias[v])
+                {
+                    resultado.distancias[v] = nova_distancia;
+                    resultado.predecessores[v] = u;
+                    resultado.movimentos[v] = novos_movimentos; 
+                    fila_prioridade.insert({resultado.distancias[v], v});
+                }
+
+                // caminho com O MESMO PESO.
+                else if (nova_distancia == resultado.distancias[v])
+                {
+                    // compara os movimentos
+                    if (novos_movimentos < resultado.movimentos[v])
+                    {
+                        resultado.predecessores[v] = u;
+                        resultado.movimentos[v] = novos_movimentos; 
+                        fila_prioridade.insert({resultado.distancias[v], v});
+                    }
+                }
             }
         }
     }
@@ -541,6 +565,18 @@ int main()
 
     GrafoPonderado mapa = tabuleiro(tamanho);
     std::vector<Exercito> vencedores = guerra(mapa, exercitos, hunnus_pos, tormentas);
+
+    // deixando ordem alfabetica so pra garantir a ordem de print
+    int n = vencedores.size(); // se tem varios vencedores
+    if (n > 1) { 
+    for (int i = 0; i < n - 1; ++i) {
+        for (int j = 0; j < n - i - 1; ++j) {
+            if (vencedores[j].cor > vencedores[j+1].cor) {
+                std::swap(vencedores[j], vencedores[j+1]); // swap pela preguica
+            }
+        }
+    }
+}
 
     for (size_t i = 0; i < vencedores.size(); ++i)
     {
