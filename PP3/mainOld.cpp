@@ -233,18 +233,15 @@ class MinHeap
 {
 private:
     std::vector<T> heap;
-
     int getParent(int index) { return (index - 1) / 2; }
     int getLeft(int index) { return 2 * index + 1; }
     int getRight(int index) { return 2 * index + 2; }
 
 public:
     void heapify(int index);
-    void full_heapify();
 
     MinHeap() = default;
     void insert(const T &value);
-    void erase(const T &value);
     T extractMin();
     bool isEmpty() const { return heap.empty(); }
 };
@@ -275,44 +272,15 @@ void MinHeap<T>::heapify(int index)
 }
 
 template <typename T>
-void MinHeap<T>::full_heapify()
-{
-    for (int i = (heap.size() / 2) - 1; i >= 0; i--)
-    {
-        heapify(i);
-    }
-}
-
-template <typename T>
 void MinHeap<T>::insert(const T &value)
 {
     heap.push_back(value);
     int index = heap.size() - 1;
-    while (index != 0 && heap[getParent(index)] > heap[index])
-    {
-        std::swap(heap[index], heap[getParent(index)]);
-        index = getParent(index);
-    }
-}
 
-template <typename T>
-void MinHeap<T>::erase(const T &value)
-{
-    // This is an inefficient way to erase, but keeping user's logic
-    int index = -1;
-    for (int i = 0; i < int(heap.size()); i++)
+    while (index != 0 && heap[index] < heap[getParent(index)])
     {
-        if (heap[i] == value)
-        {
-            index = i;
-            break;
-        }
-    }
-    if (index != -1)
-    {
-        heap[index] = heap.back();
-        heap.pop_back();
-        full_heapify();
+        std::swap(heap[index], heap[getParent(index)]); // vou usar swap pq e mais facil
+        index = getParent(index);
     }
 }
 
@@ -322,15 +290,19 @@ T MinHeap<T>::extractMin()
 {
     if (heap.empty())
     {
-        throw std::runtime_error("Heap is empty");
+        throw std::runtime_error("Heap ta vaziorrr");
     }
+
     T minValue = heap[0];
+
     heap[0] = heap.back();
     heap.pop_back();
+
     if (!heap.empty())
     {
         heapify(0);
     }
+
     return minValue;
 }
 
@@ -349,19 +321,26 @@ DijkstraResult dijkstra(const GrafoPonderado &grafo, Vertex origem)
 
     resultado.distancias[origem] = 0;
 
-    MinHeap<std::pair<Weight, Vertex>> fila_prioridade;
+    MinHeap<VertexWeightPair> fila_prioridade;
     fila_prioridade.insert({0.0f, origem});
+
+    std::vector<bool> visitado(num_vertices, false);
 
     while (!fila_prioridade.isEmpty())
     {
         Vertex u = fila_prioridade.extractMin().second;
+
+        if (visitado[u])
+            continue;
+        visitado[u] = true;
+        grafo.get_adj(0);
 
         for (const auto &vizinho : grafo.get_adj(u))
         {
             Vertex v = vizinho.first;
             Weight peso_aresta = vizinho.second;
 
-            if (resultado.distancias[u] + peso_aresta < resultado.distancias[v])
+            if (!visitado[v] && resultado.distancias[u] + peso_aresta < resultado.distancias[v])
             {
                 resultado.distancias[v] = resultado.distancias[u] + peso_aresta;
                 resultado.predecessores[v] = u;
