@@ -125,175 +125,148 @@ void GrafoPonderado::insertion_sort(std::vector<VertexWeightPair> &vec)
 }
 
 // --------------------------------------- HEAP ---------------------------------------------------
-
-// Nao me decidi sobre o tipo, entao deixarei generico
-// Pai = i/2
-// Filho esquerdo = 2i
-// filho direito = 2i + 1
 template <typename T>
 class MinHeap
 {
 private:
     std::vector<T> heap;
-
-
-    int getParent(int index) { return std::floor((index) / 2); }
-    int getLeft(int index) { return 2 * index; }
-    int getRight(int index) { return 2 * index + 1; }
+    int getParent(int index) { return (index - 1) / 2; }
+    int getLeft(int index) { return 2 * index + 1; }
+    int getRight(int index) { return 2 * index + 2; }
 
 public:
-
-    void heapify(int index); // faz as trocas a partir de um indice
-    void full_heapify();  // faz as trocas em todo o heap
+    void heapify(int index);
 
     MinHeap() = default;
     void insert(const T &value);
-    void erase(const T &value);
     T extractMin();
     bool isEmpty() const { return heap.empty(); }
 };
 
-// faz as trocas de cima para baixo
 template <typename T>
 void MinHeap<T>::heapify(int index)
 {
-    // Pegando o menor entre pai e filhos
-    // o menor possivel e o proprio pai que e o index
     int smallest = index;
     int left = getLeft(index);
     int right = getRight(index);
-
     int heapsize = heap.size();
 
-    // verifica se o filho esq exite e e menor que o pai
     if (left < heapsize && heap[left] < heap[smallest])
     {
         smallest = left;
     }
-    else
-    {
-        smallest = index;
-    }
 
-    // verifica se o filho dir exite e e menor que o pai
     if (right < heapsize && heap[right] < heap[smallest])
     {
         smallest = right;
     }
 
-    // se o menor nao e o pai, faz a troca e chama recursivamente ate geral ser trocado
     if (smallest != index)
     {
-        T temp = heap[index];
-        heap[index] = heap[smallest];
-        heap[smallest] = temp;
+        std::swap(heap[index], heap[smallest]);
         heapify(smallest);
-    }
-}
-
-template <typename T>
-void MinHeap<T>::full_heapify()
-{
-    // Comeca do ultimo pai ate a raiz
-    for (int i = getParent(heap.size() - 1); i >= 0; i--)
-    {
-        heapify(i);
     }
 }
 
 template <typename T>
 void MinHeap<T>::insert(const T &value)
 {
-    // Manda pro final do vetor
     heap.push_back(value);
-
-    // calcula o valor do indice do novo elemento
     int index = heap.size() - 1;
 
-    heapify(index);
+    while (index != 0 && heap[index] < heap[getParent(index)])
+    {
+        std::swap(heap[index], heap[getParent(index)]); // vou usar swap pq e mais facil
+        index = getParent(index);
+    }
 }
 
+
 template <typename T>
-void MinHeap<T>::erase(const T &value)
+T MinHeap<T>::extractMin()
 {
-    // procuro o valor do indice que eu quero matar
-    // se nao achar, retorno sem fazer nada
-    // se achar, troco com o ultimo elemento e dou um pop_back
-    // aí faço heapfity -> vou fazer um full so que é mais facil, mas deve dar pra fazer um heapify so do indice que troquei
-    int index = -1;
-
-    for (int i = 0; i < int(heap.size()); i++){
-        if (heap[i] == value){
-            index = i;
-            break;
-        }
+    if (heap.empty())
+    {
+        throw std::runtime_error("Heap ta vaziorrr");
     }
 
-    // verifica se achou
-    if (index == -1){
-        return;
-    }
+    T minValue = heap[0];
 
-    // troca com o ultimo e da pop
-    heap[index] = heap.back();
+    heap[0] = heap.back();
     heap.pop_back();
 
-    // faz o heapify
-    full_heapify();
-}
+    if (!heap.empty())
+    {
+        heapify(0);
+    }
 
-template <typename T>
-T MinHeap<T>::extractMin() {
-    T minValue = heap[0];
-    erase(minValue);
     return minValue;
 }
 
 // ----------------------------------------- ALGORITMO DE DIJKSTRA --------------------------------
-
-struct DijkstraResult {
+struct DijkstraResult
+{
     std::vector<Weight> distancias;
     std::vector<int> predecessores;
+    std::vector<int> movimentos;
 };
 
-
-DijkstraResult dijkstra(const GrafoPonderado& grafo, Vertex origem) {
+DijkstraResult dijkstra(const GrafoPonderado &grafo, Vertex origem)
+{
     uint num_vertices = grafo.get_vertices();
     DijkstraResult resultado;
     resultado.distancias.assign(num_vertices, std::numeric_limits<Weight>::infinity());
     resultado.predecessores.assign(num_vertices, -1);
+    resultado.movimentos.assign(num_vertices, std::numeric_limits<int>::max());
 
     resultado.distancias[origem] = 0;
+    resultado.movimentos[origem] = 0;
 
-    MinHeap<VertexWeightPair> fila_prioridade;
+    MinHeap<std::pair<Weight, Vertex>> fila_prioridade;
     fila_prioridade.insert({0.0f, origem});
-    
+
     std::vector<bool> visitado(num_vertices, false);
 
-    //std::cout << "se essa mensagem nao aparecer tem erro antes do loop while" << std::endl;
-
-    //int vezes = 1;
-    while (!fila_prioridade.isEmpty()) {
-        //std::cout << "iteracao numero "<<vezes<<" do loop while de dijkstra iniciada" << std::endl;
-        //vezes++;
+    while (!fila_prioridade.isEmpty())
+    {
         Vertex u = fila_prioridade.extractMin().second;
 
-        if (visitado[u]) continue;
+        if (visitado[u])
+            continue;
+        
         visitado[u] = true;
-        grafo.get_adj(0);
-        //std::cout << "agora o loop for vai comecar para essa iteracao do loop while, e o index do adj vai ser: " << u << " e o get_adj() desse index resulta em um vetor de tamanho " << grafo.get_adj(int(u)).size() << std::endl;
-        //int vezes2 = 1;
-        for (const auto& vizinho : grafo.get_adj(u)) {
-            //std::cout << "agora o loop numero "<<vezes2<<" do loop while numero "<<vezes2<< std::endl;
-            //vezes2++;
+    
+        for (const auto &vizinho : grafo.get_adj(u))
+        {
             Vertex v = vizinho.first;
             Weight peso_aresta = vizinho.second;
 
-            if (!visitado[v] && resultado.distancias[u] + peso_aresta < resultado.distancias[v]) {
-                //std::cout<<"condicional if do loop for foi acionado"<<std::endl;
-                resultado.distancias[v] = resultado.distancias[u] + peso_aresta;
-                resultado.predecessores[v] = u;
-                fila_prioridade.insert({resultado.distancias[v], v});
+            Weight nova_distancia = resultado.distancias[u] + peso_aresta; // salvando a nova distancia
+            int novos_movimentos = resultado.movimentos[u] + 1; // salvando os novos movimentos
+
+            // verficando se ja foi visitado
+            if (!visitado[v])
+            {
+                // caminho com peso menor
+                if (nova_distancia < resultado.distancias[v])
+                {
+                    resultado.distancias[v] = nova_distancia;
+                    resultado.predecessores[v] = u;
+                    resultado.movimentos[v] = novos_movimentos; 
+                    fila_prioridade.insert({resultado.distancias[v], v});
+                }
+
+                // caminho com O MESMO PESO.
+                else if (nova_distancia == resultado.distancias[v])
+                {
+                    // compara os movimentos
+                    if (novos_movimentos < resultado.movimentos[v])
+                    {
+                        resultado.predecessores[v] = u;
+                        resultado.movimentos[v] = novos_movimentos; 
+                        fila_prioridade.insert({resultado.distancias[v], v});
+                    }
+                }
             }
         }
     }
